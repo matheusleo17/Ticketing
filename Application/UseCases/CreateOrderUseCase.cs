@@ -1,4 +1,5 @@
 ﻿using System.Net.NetworkInformation;
+using Ticketing.Application.Events;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Enums;
@@ -10,15 +11,18 @@ namespace Ticketing.Application.UseCases
         private readonly ITicketRepository _ticketRepository;
         private readonly IClock _clock;
         private readonly IOrderRepository _orderRepository;
+        private readonly IEventBus _eventBus;
 
         public CreateOrderUseCase(
             ITicketRepository ticketRepository,
             IClock clock,
-            IOrderRepository order)
+            IOrderRepository order,
+            IEventBus eventBus)
         {
             _clock = clock;
             _ticketRepository = ticketRepository;
             _orderRepository = order;
+            _eventBus = eventBus;
         }
 
         public async Task<Order?> AddOrder(Guid ticketId, Guid buyerId)
@@ -41,6 +45,8 @@ namespace Ticketing.Application.UseCases
                     };
                     await _ticketRepository.SaveTicket(ticket);
                     await _orderRepository.SaveOrder(newOder);
+
+                    await _eventBus.Publish(new OrderCreated(newOder.Id, newOder.TicketId));
 
                     return newOder;
                   
