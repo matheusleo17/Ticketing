@@ -7,5 +7,7 @@
         public string Username { get; init; } = "guest";
         public string Password { get; init; } = "guest";
         public string Exchange { get; init; } = "ticketing.events";
+        public string Queue { get; set; } = default!;
+
     }
 }

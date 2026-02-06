@@ -2,6 +2,8 @@
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using Ticketing.Application.Interfaces;
+
 
 namespace Ticketing.Infrastructure.Messaging
 {
