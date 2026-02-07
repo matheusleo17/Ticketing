@@ -20,6 +20,9 @@ public class OrderCreatedConsumerHostedService : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        Console.WriteLine($"QUEUE = '{_options.Queue}'");
+        Console.WriteLine($"EXCHANGE = '{_options.Exchange}'");
+
         var factory = new ConnectionFactory
         {
             HostName = _options.Host,
@@ -68,8 +71,9 @@ public class OrderCreatedConsumerHostedService : BackgroundService
             autoAck: false,
             consumer: consumer
         );
+        Console.WriteLine("Worker conectado ao RabbitMQ e aguardando mensagens...");
 
-        return Task.CompletedTask;
+        return Task.Delay(Timeout.Infinite, stoppingToken);
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
