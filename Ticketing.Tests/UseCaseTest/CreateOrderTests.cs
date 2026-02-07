@@ -35,7 +35,7 @@ namespace Ticketing.Tests.UseCaseTest
                     orderRepository,
                     eventBus);
 
-            var order = await useCase.AddOrder(ticketId, buyerId);
+            var order = await useCase.CreateOrder(ticketId, buyerId);
 
             Assert.NotNull(order);
             Assert.Equal(TicketStatus.Reserved, ticket.Status);
@@ -68,7 +68,7 @@ namespace Ticketing.Tests.UseCaseTest
                     clock,
                     orderRepository,
                     eventBus);
-            var order = await useCase.AddOrder(ticketId, buyerId);
+            var order = await useCase.CreateOrder(ticketId, buyerId);
 
             Assert.Null(order);
             Assert.Empty(eventBus.PublishedEvents);

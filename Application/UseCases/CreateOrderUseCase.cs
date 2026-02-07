@@ -1,4 +1,5 @@
 ﻿using System.Net.NetworkInformation;
+using Ticketing.Application.Dtos;
 using Ticketing.Application.Events;
 using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
@@ -25,17 +26,22 @@ namespace Ticketing.Application.UseCases
             _eventBus = eventBus;
         }
 
-        public async Task<Order?> AddOrder(Guid ticketId, Guid buyerId)
+        public async Task<CreateOrderResult?> CreateOrder(Guid ticketId, Guid buyerId)
         {
             var ticket = await _ticketRepository.GetTicketById(ticketId);
 
-            if(ticket is not null)
+            if(ticket is null)
+                return null;
+            if (!ticket.Reserve())
+                return null;
+
+            if (ticket is not null)
             {
                 var reserved = ticket.Reserve();
 
                 if (reserved)
                 { 
-                    var newOder = new Order
+                    var newOrder = new Order
                     {
                         Id = Guid.NewGuid(),
                         TicketId = ticketId,
@@ -44,16 +50,20 @@ namespace Ticketing.Application.UseCases
                         ExpiresAt = _clock.Now().AddMinutes(1)
                     };
                     await _ticketRepository.SaveTicket(ticket);
-                    await _orderRepository.SaveOrder(newOder);
+                    await _orderRepository.SaveOrder(newOrder);
 
-                    await _eventBus.Publish(new OrderCreated(newOder.Id, newOder.TicketId));
+                    await _eventBus.Publish(new OrderCreated(newOrder.Id, newOrder.TicketId));
 
-                    return newOder;
-                  
+                    return new CreateOrderResult(
+                     newOrder.Id,
+                     newOrder.TicketId,
+                     newOrder.ExpiresAt
+                     );
                 }
 
             }
             return null;
+            
         }
 
         

@@ -20,8 +20,6 @@ public class OrderCreatedConsumerHostedService : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Console.WriteLine($"QUEUE = '{_options.Queue}'");
-        Console.WriteLine($"EXCHANGE = '{_options.Exchange}'");
 
         var factory = new ConnectionFactory
         {
@@ -62,7 +60,6 @@ public class OrderCreatedConsumerHostedService : BackgroundService
             var msg = Encoding.UTF8.GetString(ea.Body.ToArray());
             Console.WriteLine($"[OrderCreated RECEIVED] {msg}");
 
-            // ack manual
             _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
         };
 
