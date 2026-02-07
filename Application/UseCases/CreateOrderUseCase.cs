@@ -1,4 +1,5 @@
 ﻿using System.Net.NetworkInformation;
+using Ticketing.Application.Common;
 using Ticketing.Application.Dtos;
 using Ticketing.Application.Events;
 using Ticketing.Application.Interfaces;
@@ -26,46 +27,41 @@ namespace Ticketing.Application.UseCases
             _eventBus = eventBus;
         }
 
-        public async Task<CreateOrderResult?> CreateOrder(Guid ticketId, Guid buyerId)
+        public async Task<Result<CreateOrderResult>> CreateOrder(Guid ticketId, Guid buyerId)
         {
             var ticket = await _ticketRepository.GetTicketById(ticketId);
 
-            if(ticket is null)
-                return null;
-            if (!ticket.Reserve())
-                return null;
+            if (ticket is null)
+                return Result<CreateOrderResult>.Failure(ErrorType.TicketNotFound);
 
-            if (ticket is not null)
+            var reserved = ticket.Reserve();
+
+            if (!reserved)
+                return Result<CreateOrderResult>.Failure(ErrorType.TicketAlreadyReserved);
+
+            var newOrder = new Order
             {
-                var reserved = ticket.Reserve();
+                Id = Guid.NewGuid(),
+                TicketId = ticketId,
+                BuyerId = buyerId,
+                Status = OrderStatus.Created,
+                ExpiresAt = _clock.Now().AddMinutes(1)
+            };
 
-                if (reserved)
-                { 
-                    var newOrder = new Order
-                    {
-                        Id = Guid.NewGuid(),
-                        TicketId = ticketId,
-                        BuyerId = buyerId,
-                        Status = OrderStatus.Created,
-                        ExpiresAt = _clock.Now().AddMinutes(1)
-                    };
-                    await _ticketRepository.SaveTicket(ticket);
-                    await _orderRepository.SaveOrder(newOrder);
+            await _ticketRepository.SaveTicket(ticket);
+            await _orderRepository.SaveOrder(newOrder);
 
-                    await _eventBus.Publish(new OrderCreated(newOrder.Id, newOrder.TicketId));
+            await _eventBus.Publish(new OrderCreated(newOrder.Id, newOrder.TicketId));
 
-                    return new CreateOrderResult(
-                     newOrder.Id,
-                     newOrder.TicketId,
-                     newOrder.ExpiresAt
-                     );
-                }
-
-            }
-            return null;
-            
+            return Result<CreateOrderResult>.Success(
+                new CreateOrderResult(
+                    newOrder.Id,
+                    newOrder.TicketId,
+                    newOrder.ExpiresAt
+                )
+            );
         }
 
-        
+
     }
 }
