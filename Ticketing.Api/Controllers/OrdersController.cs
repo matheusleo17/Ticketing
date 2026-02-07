@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Ticketing.Api.Dtos;
+using Ticketing.Application.Common;
 using Ticketing.Application.UseCases;
 
 namespace Ticketing.Api.Controllers
@@ -20,17 +21,27 @@ namespace Ticketing.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
         {
-            var orderid = await _useCase.CreateOrder(request.TicketId, request.BuyerId);
-            if (orderid is null)
-                return Conflict("Ticket not available");
-
-
-            return CreatedAtAction(
-            nameof(Create),
-                new { id = orderid.OrderId },
-                null
+            var result = await _useCase.CreateOrder(
+                request.TicketId,
+                request.BuyerId
             );
 
+            if (!result.IsSuccess)
+            {
+                return result.Error switch
+                {
+                    ErrorType.TicketNotFound => NotFound("Ticket not found"),
+                    ErrorType.TicketAlreadyReserved => Conflict("Ticket already reserved"),
+                    _ => BadRequest()
+                };
+            }
+
+            return CreatedAtAction(
+                nameof(Create),
+                new { id = result.Value!.OrderId },
+                result.Value
+            );
         }
+
     }
 }

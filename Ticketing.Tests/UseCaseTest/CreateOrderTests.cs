@@ -1,4 +1,5 @@
-﻿using Ticketing.Application.Events;
+﻿using Ticketing.Application.Common;
+using Ticketing.Application.Events;
 using Ticketing.Application.UseCases;
 using Ticketing.Domain.Entities;
 using Ticketing.Domain.Enums;
@@ -15,10 +16,10 @@ namespace Ticketing.Tests.UseCaseTest
             var ticketId = Guid.NewGuid();
             var buyerId = Guid.NewGuid();
 
-            var ticket = new Ticket 
-            { 
-                Id = ticketId, 
-                Status = TicketStatus.Available 
+            var ticket = new Ticket
+            {
+                Id = ticketId,
+                Status = TicketStatus.Available
             };
             var ticketRepository = new InMemoryTicketRepository();
             await ticketRepository.SaveTicket(ticket);
@@ -35,12 +36,15 @@ namespace Ticketing.Tests.UseCaseTest
                     orderRepository,
                     eventBus);
 
-            var order = await useCase.CreateOrder(ticketId, buyerId);
+            var result = await useCase.CreateOrder(ticketId, buyerId);
 
-            Assert.NotNull(order);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Value);
+
             Assert.Equal(TicketStatus.Reserved, ticket.Status);
             Assert.Single(eventBus.PublishedEvents);
             Assert.IsType<OrderCreated>(eventBus.PublishedEvents[0]);
+
 
         }
         [Fact]
@@ -68,13 +72,36 @@ namespace Ticketing.Tests.UseCaseTest
                     clock,
                     orderRepository,
                     eventBus);
-            var order = await useCase.CreateOrder(ticketId, buyerId);
+            var result = await useCase.CreateOrder(ticketId, buyerId);
 
-            Assert.Null(order);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorType.TicketAlreadyReserved, result.Error);
+
             Assert.Empty(eventBus.PublishedEvents);
             Assert.Equal(TicketStatus.Reserved, ticket.Status);
 
         }
+        [Fact]
+        public async Task TaskShould_return_error_when_ticket_does_not_exist()
+        {
+            var ticketId = Guid.NewGuid();
+            var buyerId = Guid.NewGuid();
 
+            var ticketRepository = new InMemoryTicketRepository();
+            var orderRespository = new InMemoryOrderRepository();
+            var eventBus = new FakeEventBus();
+            var now = new DateTime(2026, 1, 1, 10, 0, 0);
+            var clock = new FakeClock(now);
+
+            var usecase = new CreateOrderUseCase(ticketRepository, clock, orderRespository, eventBus);
+
+            var result = await usecase.CreateOrder(ticketId, buyerId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ErrorType.TicketNotFound, result.Error);
+            Assert.Empty(eventBus.PublishedEvents);
+
+
+        }
     }
 }
