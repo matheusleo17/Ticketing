@@ -1,4 +1,5 @@
-﻿using Ticketing.Application.Common;
+﻿using System.Net.Sockets;
+using Ticketing.Application.Common;
 using Ticketing.Application.Events;
 using Ticketing.Application.UseCases;
 using Ticketing.Domain.Entities;
@@ -93,13 +94,82 @@ namespace Ticketing.Tests.UseCaseTest
             var now = new DateTime(2026, 1, 1, 10, 0, 0);
             var clock = new FakeClock(now);
 
-            var usecase = new CreateOrderUseCase(ticketRepository, clock, orderRespository, eventBus);
+            var useCase = new CreateOrderUseCase(ticketRepository, clock, orderRespository, eventBus);
 
-            var result = await usecase.CreateOrder(ticketId, buyerId);
+            var result = await useCase.CreateOrder(ticketId, buyerId);
 
             Assert.False(result.IsSuccess);
             Assert.Equal(ErrorType.TicketNotFound, result.Error);
             Assert.Empty(eventBus.PublishedEvents);
+
+
+        }
+        [Fact]
+        public async Task Should_publish_event_only_once_when_creating_order_twice_for_same_ticket()
+        {
+            var ticketId = Guid.NewGuid();
+            var buyerId = Guid.NewGuid();
+
+            var ticket = new Ticket
+            {
+                Id = ticketId,
+                Status = TicketStatus.Available
+            };
+
+            var ticketRepository = new InMemoryTicketRepository();
+            var orderRespository = new InMemoryOrderRepository();
+            var eventBus = new FakeEventBus();
+            var now = new DateTime(2026, 1, 1, 10, 0, 0);
+            var clock = new FakeClock(now);
+
+            var useCase = new CreateOrderUseCase(ticketRepository, clock, orderRespository, eventBus);
+
+            var firstResult = await useCase.CreateOrder(ticketId, buyerId);
+            var secondResult = await useCase.CreateOrder(ticketId, buyerId);
+
+            Assert.True(firstResult.IsSuccess);
+            Assert.False(secondResult.IsSuccess);
+            Assert.Equal(ErrorType.TicketAlreadyReserved, secondResult.Error);
+
+            Assert.Single(eventBus.PublishedEvents);
+            Assert.Equal(TicketStatus.Reserved, ticket.Status);
+
+        }
+        [Fact]
+        public async Task Should_allow_only_one_order_when_creating_concurrently()
+        {
+            var ticketId = Guid.NewGuid();
+            var buyerId = Guid.NewGuid();
+
+            var ticket = new Ticket
+            {
+                Id = ticketId,
+                Status = TicketStatus.Available
+            };
+
+            var ticketRepository = new InMemoryTicketRepository();
+            var orderRespository = new InMemoryOrderRepository();
+            var eventBus = new FakeEventBus();
+            var now = new DateTime(2026, 1, 1, 10, 0, 0);
+            var clock = new FakeClock(now);
+
+            var useCase = new CreateOrderUseCase(ticketRepository, clock, orderRespository, eventBus);
+
+            var tasks = new[]
+            {
+                Task.Run(()=>useCase.CreateOrder(ticketId, buyerId)),
+                Task.Run (() => useCase.CreateOrder(ticketId, buyerId))
+            };
+            var results = await Task.WhenAll(tasks);
+            var successCount = results.Count(r => r.IsSuccess);
+            var failureCount = results.Count(r => !r.IsSuccess);
+
+            Assert.Equal(1, successCount);
+            Assert.Equal(1, failureCount);
+
+            Assert.Single(eventBus.PublishedEvents);
+            Assert.Equal(TicketStatus.Reserved, ticket.Status);
+
 
 
         }
