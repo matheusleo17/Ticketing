@@ -23,4 +23,3 @@ namespace Ticketing.Application.Common
             => new(false, default, error);
     }
 }
-}

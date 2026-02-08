@@ -8,3 +8,18 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+
+  postgres:
+    image: postgres:16
+    container_name: ticketing-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ticketing
+      POSTGRES_USER: ticketing_user
+      POSTGRES_PASSWORD: ticketing_pass
+    volumes:
+      - ticketing_pgdata:/var/lib/postgresql/data
+
+volumes:
+  ticketing_pgdata:
