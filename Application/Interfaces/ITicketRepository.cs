@@ -4,7 +4,7 @@ namespace Ticketing.Application.Interfaces
 {
     public interface ITicketRepository
     {
-        Task SaveTicket(Ticket ticket);
+        Task Update(Ticket ticket);
         Task<Ticket?> GetTicketById(Guid id);
     }
 }

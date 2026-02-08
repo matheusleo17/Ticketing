@@ -7,7 +7,7 @@ namespace Ticketing.Tests.Fakes
     {
 
         private readonly Dictionary<Guid, Ticket> _db = new();
-        public Task SaveTicket(Ticket ticket)
+        public Task Update(Ticket ticket)
         {
             _db[ticket.Id] = ticket;
             return Task.CompletedTask;

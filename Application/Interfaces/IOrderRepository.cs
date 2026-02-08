@@ -4,6 +4,6 @@ namespace Ticketing.Application.Interfaces
 {
     public interface IOrderRepository
     {
-        Task SaveOrder(Order order);
+        Task Add(Order order);
     }
 }

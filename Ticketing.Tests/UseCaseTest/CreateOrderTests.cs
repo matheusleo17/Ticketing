@@ -23,7 +23,7 @@ namespace Ticketing.Tests.UseCaseTest
                 Status = TicketStatus.Available
             };
             var ticketRepository = new InMemoryTicketRepository();
-            await ticketRepository.SaveTicket(ticket);
+            await ticketRepository.Update(ticket);
 
             var orderRepository = new InMemoryOrderRepository();
             var eventBus = new FakeEventBus();
@@ -60,7 +60,7 @@ namespace Ticketing.Tests.UseCaseTest
                 Status = TicketStatus.Reserved
             };
             var ticketRepository = new InMemoryTicketRepository();
-            await ticketRepository.SaveTicket(ticket);
+            await ticketRepository.Update(ticket);
 
             var orderRepository = new InMemoryOrderRepository();
             var eventBus = new FakeEventBus();

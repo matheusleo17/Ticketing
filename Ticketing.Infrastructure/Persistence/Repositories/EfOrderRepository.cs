@@ -1,19 +1,19 @@
 ﻿using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
+using Ticketing.Infrastructure.Persistence;
 
-namespace Ticketing.Infrastructure.Persistence.Repositories
+public sealed class EFOrderRepository : IOrderRepository
 {
-    public  class EfOrderRepository : IOrderRepository
-    {
-        private readonly TicketingDbContext _context;
+    private readonly TicketingDbContext _context;
 
-        public EfOrderRepository(TicketingDbContext ticketDbContext)
-        {
-            _context = ticketDbContext;
-        }
-        public Task SaveOrder(Order order)
-        {
-            return _context.SaveChangesAsync();
-        }
+    public EFOrderRepository(TicketingDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task Add(Order order)
+    {
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
     }
 }

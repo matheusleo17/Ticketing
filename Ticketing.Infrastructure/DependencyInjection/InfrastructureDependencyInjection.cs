@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using Ticketing.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Ticketing.Infrastructure.Persistence.Repositories;
 using Ticketing.Application.Interfaces;
+using Ticketing.Infrastructure.Time;
+using Ticketing.Infrastructure.Messaging;
+using Ticketing.Application.UseCases;
 
 
 
@@ -18,10 +20,18 @@ namespace Ticketing.Infrastructure.DependencyInjection
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
 
             });
+            services.Configure<RabbitMqOptions>(options =>
+            {
+                configuration.GetSection("RabbitMq").Bind(options);
+            });
 
 
-            services.AddScoped<ITicketRepository, EfTicketRepository>();
-            services.AddScoped<IOrderRepository, EfOrderRepository>();
+            services.AddScoped<ITicketRepository, EFTicketRepository>();
+            services.AddScoped<IOrderRepository, EFOrderRepository>();
+            services.AddScoped<IClock, SystemClock>();
+            services.AddScoped<IEventBus, RabbitMqEventBus>();
+            services.AddScoped<CreateOrderUseCase>();
+
 
             return services;
         }

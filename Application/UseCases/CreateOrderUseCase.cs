@@ -47,9 +47,10 @@ namespace Ticketing.Application.UseCases
                 Status = OrderStatus.Created,
                 ExpiresAt = _clock.Now().AddMinutes(1)
             };
+            await _ticketRepository.Update(ticket);
 
-            await _ticketRepository.SaveTicket(ticket);
-            await _orderRepository.SaveOrder(newOrder);
+
+            await _orderRepository.Add(newOrder);
 
             await _eventBus.Publish(new OrderCreated(newOrder.Id, newOrder.TicketId));
 

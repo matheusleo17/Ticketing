@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ticketing.Application.UseCases;
 
 namespace Ticketing.Infrastructure.DependencyInjection
 {
@@ -7,6 +8,8 @@ namespace Ticketing.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddApplication(this IServiceCollection services) 
         {
+
+            services.AddScoped<CreateOrderUseCase>();
             return services;
         }
     }

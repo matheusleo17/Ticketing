@@ -2,12 +2,11 @@
 {
     public sealed class RabbitMqOptions
     {
-        public string Host { get; init; } = "localhost";
-        public int Port { get; init; } = 5672;
-        public string Username { get; init; } = "guest";
-        public string Password { get; init; } = "guest";
-        public string Exchange { get; init; } = "ticketing.events";
+        public string Host { get; set; } = "localhost";
+        public int Port { get; set; } = 5672;
+        public string Username { get; set; } = "guest";
+        public string Password { get; set; } = "guest";
+        public string Exchange { get; set; } = "ticketing.events";
         public string Queue { get; set; } = default!;
-
     }
 }

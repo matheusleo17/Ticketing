@@ -1,29 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Ticketing.Application.Interfaces;
+﻿using Ticketing.Application.Interfaces;
 using Ticketing.Domain.Entities;
+using Ticketing.Infrastructure.Persistence;
 
-namespace Ticketing.Infrastructure.Persistence.Repositories
+public  class EFTicketRepository : ITicketRepository
 {
-    public class EfTicketRepository : ITicketRepository
+    private readonly TicketingDbContext _context;
+
+    public EFTicketRepository(TicketingDbContext context)
     {
-        private readonly TicketingDbContext _context;
+        _context = context;
+    }
 
-        public EfTicketRepository(TicketingDbContext ticketDbContext) 
-        { 
-            _context = ticketDbContext;
-        }
+    public async Task<Ticket?> GetTicketById(Guid id)
+    {
+        return await _context.Tickets.FindAsync(id);
+    }
 
-        public Task<Ticket?> GetTicketById(Guid id)
-        {
-            var existsId = _context.Tickets.FirstOrDefaultAsync(_ => _.Id == id);
-
-            return existsId;
-        }
-
-        public Task SaveTicket(Ticket ticket)
-        {
-          return _context.SaveChangesAsync();
-
-        }
+    public async Task Update(Ticket ticket)
+    {
+        _context.Tickets.Update(ticket);
+        await _context.SaveChangesAsync();
     }
 }
